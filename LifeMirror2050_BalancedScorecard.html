@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LifeMirror 2050 — Balanced Scorecard Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Inter:wght@300;400;500&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --mir-bg:#0a0e1a;--mir-surface:#111827;--mir-card:#141d2e;
+    --mir-accent:#00d4ff;--mir-accent2:#7c3aed;--mir-gold:#f59e0b;
+    --mir-green:#10b981;--mir-red:#ef4444;--mir-text:#e2e8f0;--mir-muted:#64748b;
+  }
+  body{background:var(--mir-bg);color:var(--mir-text);font-family:'Inter',sans-serif;min-height:100vh}
+  .shell{max-width:1100px;margin:0 auto;padding:24px 20px}
+  .hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:32px;padding-bottom:20px;border-bottom:1px solid rgba(0,212,255,0.15)}
+  .hdr-left h1{font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;letter-spacing:2px;color:var(--mir-accent)}
+  .hdr-left p{font-size:13px;color:var(--mir-muted);margin-top:2px;letter-spacing:1px}
+  .live-badge{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--mir-green);background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.25);padding:4px 10px;border-radius:20px}
+  .live-dot{width:7px;height:7px;background:var(--mir-green);border-radius:50%;animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+  .tabs{display:flex;gap:4px;margin-bottom:28px;background:var(--mir-surface);padding:4px;border-radius:10px;width:fit-content}
+  .tab{padding:8px 18px;border-radius:7px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;color:var(--mir-muted);transition:all .2s;letter-spacing:.5px}
+  .tab.active{background:var(--mir-accent);color:#000;font-weight:600}
+  .tab:hover:not(.active){color:var(--mir-text);background:rgba(255,255,255,.06)}
+  .metrics-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:28px}
+  .metric-card{background:var(--mir-card);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:16px 18px;position:relative;overflow:hidden}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+  .metric-card.blue::before{background:var(--mir-accent)}
+  .metric-card.purple::before{background:var(--mir-accent2)}
+  .metric-card.gold::before{background:var(--mir-gold)}
+  .metric-card.green::before{background:var(--mir-green)}
+  .metric-label{font-size:11px;color:var(--mir-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:6px}
+  .metric-val{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;line-height:1}
+  .metric-sub{font-size:11px;color:var(--mir-muted);margin-top:4px}
+  .delta-up{color:var(--mir-green)}
+  .section{display:none}
+  .section.active{display:block}
+  .perspective-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .p-card{background:var(--mir-card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px}
+  .p-card-head{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+  .p-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+  .p-card-head h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;letter-spacing:1px}
+  .kpi-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid rgba(255,255,255,.05)}
+  .kpi-row:last-child{border-bottom:none}
+  .kpi-name{font-size:13px;color:var(--mir-text);flex:1}
+  .kpi-target{font-size:12px;color:var(--mir-muted);margin:0 12px}
+  .kpi-bar-wrap{width:100px;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;margin:0 10px}
+  .kpi-bar{height:100%;border-radius:3px}
+  .kpi-pct{font-size:12px;font-weight:500;min-width:34px;text-align:right}
+  .chart-container{background:var(--mir-card);border:1px solid rgba(255,255,255,.07);border-radius:14px;padding:22px;margin-bottom:18px}
+  .chart-title{font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;letter-spacing:1px;margin-bottom:16px;color:var(--mir-text)}
+  .bar-chart{display:flex;align-items:flex-end;gap:8px;height:160px}
+  .bar-col{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+  .bar{width:100%;border-radius:4px 4px 0 0;cursor:pointer;transition:filter .2s}
+  .bar:hover{filter:brightness(1.2)}
+  .bar-label{font-size:11px;color:var(--mir-muted);text-align:center}
+  .bar-val{font-size:11px;font-weight:500;color:var(--mir-text)}
+  .bm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+  .bm-card{background:var(--mir-card);border:1px solid rgba(255,255,255,.07);border-radius:12px;padding:18px}
+  .bm-card h4{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:600;letter-spacing:1px;margin-bottom:10px;color:var(--mir-accent)}
+  .bm-item{font-size:12px;color:var(--mir-muted);padding:3px 0;display:flex;align-items:flex-start;gap:6px}
+  .bm-item::before{content:'›';color:var(--mir-accent);flex-shrink:0}
+  .mirror-demo{background:var(--mir-card);border:1px solid rgba(0,212,255,.2);border-radius:20px;padding:28px;text-align:center;max-width:420px;margin:0 auto 18px}
+  .mirror-screen{background:#000;border:2px solid rgba(0,212,255,.3);border-radius:16px;padding:24px;margin-bottom:16px}
+  .greeting{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:600;color:var(--mir-accent);margin-bottom:4px;letter-spacing:1px}
+  .date-time{font-size:11px;color:var(--mir-muted);margin-bottom:16px}
+  .health-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+  .health-item{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:8px;padding:8px 10px;text-align:left}
+  .health-key{font-size:10px;color:var(--mir-muted);letter-spacing:.5px}
+  .health-val{font-size:13px;font-weight:500;color:var(--mir-text);margin-top:1px}
+  .health-tip{background:rgba(0,212,255,.07);border:1px solid rgba(0,212,255,.2);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--mir-accent);text-align:left}
+  .scan-btn{background:var(--mir-accent);color:#000;border:none;border-radius:8px;padding:10px 24px;font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;cursor:pointer;margin-top:6px;transition:all .2s}
+  .scan-btn:hover{transform:scale(1.03)}
+  .scanning{color:var(--mir-accent);font-size:12px;margin-top:8px;min-height:16px}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="hdr">
+    <div class="hdr-left">
+      <h1>LIFEMIRROR 2050</h1>
+      <p>AI SMART HEALTH MIRROR · STRATEGIC BALANCED SCORECARD DASHBOARD</p>
+    </div>
+    <div class="live-badge"><span class="live-dot"></span>LIVE DASHBOARD</div>
+  </div>
+  <div class="metrics-row">
+    <div class="metric-card blue"><div class="metric-label">Total Revenue (2055)</div><div class="metric-val" style="color:var(--mir-accent)">₹285 Cr</div><div class="metric-sub"><span class="delta-up">↑ 14.2%</span> vs prior year</div></div>
+    <div class="metric-card purple"><div class="metric-label">Active Users</div><div class="metric-val" style="color:var(--mir-accent2)">1,00,000</div><div class="metric-sub"><span class="delta-up">↑ 22.5%</span> growth</div></div>
+    <div class="metric-card gold"><div class="metric-label">Diagnostic Accuracy</div><div class="metric-val" style="color:var(--mir-gold)">92%</div><div class="metric-sub"><span class="delta-up">↑ 3pp</span> QoQ</div></div>
+    <div class="metric-card green"><div class="metric-label">Satisfaction Score</div><div class="metric-val" style="color:var(--mir-green)">95%</div><div class="metric-sub"><span class="delta-up">↑ 1pp</span> QoQ</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('bsc')">Balanced Scorecard</button>
+    <button class="tab" onclick="switchTab('revenue')">Revenue Projections</button>
+    <button class="tab" onclick="switchTab('biz')">Business Model</button>
+    <button class="tab" onclick="switchTab('proto')">Live Prototype</button>
+  </div>
+  <div class="section active" id="tab-bsc">
+    <div class="perspective-grid">
+      <div class="p-card"><div class="p-card-head"><div class="p-icon" style="background:rgba(0,212,255,.1)">💰</div><h3 style="color:var(--mir-accent)">FINANCIAL PERSPECTIVE</h3></div>
+        <div class="kpi-row"><span class="kpi-name">Annual Device Sales Revenue</span><span class="kpi-target">₹250 Cr</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:88%;background:var(--mir-accent)"></div></div><span class="kpi-pct" style="color:var(--mir-accent)">88%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Subscription Revenue</span><span class="kpi-target">₹35.8 Cr</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:92%;background:var(--mir-accent)"></div></div><span class="kpi-pct" style="color:var(--mir-accent)">92%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Hospital Data Insights</span><span class="kpi-target">₹15 Cr</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:74%;background:var(--mir-accent)"></div></div><span class="kpi-pct" style="color:var(--mir-accent)">74%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Gross Margin</span><span class="kpi-target">62%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:80%;background:var(--mir-accent)"></div></div><span class="kpi-pct" style="color:var(--mir-accent)">80%</span></div>
+      </div>
+      <div class="p-card"><div class="p-card-head"><div class="p-icon" style="background:rgba(124,58,237,.12)">👤</div><h3 style="color:var(--mir-accent2)">CUSTOMER PERSPECTIVE</h3></div>
+        <div class="kpi-row"><span class="kpi-name">Customer Satisfaction (CSAT)</span><span class="kpi-target">95%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:95%;background:var(--mir-accent2)"></div></div><span class="kpi-pct" style="color:var(--mir-accent2)">95%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Early Disease Detection Rate</span><span class="kpi-target">90%+</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:88%;background:var(--mir-accent2)"></div></div><span class="kpi-pct" style="color:var(--mir-accent2)">88%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Monthly Active Users</span><span class="kpi-target">80% DAU</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:82%;background:var(--mir-accent2)"></div></div><span class="kpi-pct" style="color:var(--mir-accent2)">82%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Net Promoter Score</span><span class="kpi-target">72 NPS</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:76%;background:var(--mir-accent2)"></div></div><span class="kpi-pct" style="color:var(--mir-accent2)">76%</span></div>
+      </div>
+      <div class="p-card"><div class="p-card-head"><div class="p-icon" style="background:rgba(245,158,11,.1)">⚙️</div><h3 style="color:var(--mir-gold)">INTERNAL PROCESS</h3></div>
+        <div class="kpi-row"><span class="kpi-name">AI Diagnostic Accuracy</span><span class="kpi-target">92%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:92%;background:var(--mir-gold)"></div></div><span class="kpi-pct" style="color:var(--mir-gold)">92%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Scan Processing Time</span><span class="kpi-target">&lt;3 sec</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:97%;background:var(--mir-gold)"></div></div><span class="kpi-pct" style="color:var(--mir-gold)">97%</span></div>
+        <div class="kpi-row"><span class="kpi-name">System Uptime</span><span class="kpi-target">99.9%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:99%;background:var(--mir-gold)"></div></div><span class="kpi-pct" style="color:var(--mir-gold)">99%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Data Privacy Compliance</span><span class="kpi-target">100%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:100%;background:var(--mir-gold)"></div></div><span class="kpi-pct" style="color:var(--mir-gold)">100%</span></div>
+      </div>
+      <div class="p-card"><div class="p-card-head"><div class="p-icon" style="background:rgba(16,185,129,.1)">🚀</div><h3 style="color:var(--mir-green)">LEARNING & GROWTH</h3></div>
+        <div class="kpi-row"><span class="kpi-name">R&D Investment (% Revenue)</span><span class="kpi-target">15%</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:75%;background:var(--mir-green)"></div></div><span class="kpi-pct" style="color:var(--mir-green)">On Target</span></div>
+        <div class="kpi-row"><span class="kpi-name">AI Model Improvement Cycles</span><span class="kpi-target">12/yr</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:83%;background:var(--mir-green)"></div></div><span class="kpi-pct" style="color:var(--mir-green)">83%</span></div>
+        <div class="kpi-row"><span class="kpi-name">Healthcare Partner Integrations</span><span class="kpi-target">50 hospitals</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:68%;background:var(--mir-green)"></div></div><span class="kpi-pct" style="color:var(--mir-green)">68%</span></div>
+        <div class="kpi-row"><span class="kpi-name">New Health Indicators Added</span><span class="kpi-target">5/yr</span><div class="kpi-bar-wrap"><div class="kpi-bar" style="width:80%;background:var(--mir-green)"></div></div><span class="kpi-pct" style="color:var(--mir-green)">80%</span></div>
+      </div>
+    </div>
+  </div>
+  <div class="section" id="tab-revenue">
+    <div class="chart-container">
+      <div class="chart-title">PROJECTED REVENUE 2050–2055 (₹ CRORE)</div>
+      <div class="bar-chart" id="revChart"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div class="p-card" style="padding:16px"><div class="chart-title" style="font-size:13px;margin-bottom:8px">DEVICE SALES</div><div style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--mir-accent)">₹250 Cr</div><div style="font-size:12px;color:var(--mir-muted);margin-top:4px">1,00,000 units × ₹25,000</div></div>
+      <div class="p-card" style="padding:16px"><div class="chart-title" style="font-size:13px;margin-bottom:8px">SUBSCRIPTIONS</div><div style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--mir-accent2)">₹35.8 Cr</div><div style="font-size:12px;color:var(--mir-muted);margin-top:4px">₹299/mo × 12 × 1L users</div></div>
+      <div class="p-card" style="padding:16px"><div class="chart-title" style="font-size:13px;margin-bottom:8px">DATA INSIGHTS</div><div style="font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;color:var(--mir-gold)">₹15 Cr</div><div style="font-size:12px;color:var(--mir-muted);margin-top:4px">Hospital analytics packages</div></div>
+    </div>
+  </div>
+  <div class="section" id="tab-biz">
+    <div class="bm-grid">
+      <div class="bm-card"><h4>VALUE PROPOSITION</h4><div class="bm-item">Daily AI-powered health scan</div><div class="bm-item">Early disease detection (5+ years ahead)</div><div class="bm-item">Preventive care → reduce hospital visits</div><div class="bm-item">Personalized daily health tips</div></div>
+      <div class="bm-card"><h4>CUSTOMER SEGMENTS</h4><div class="bm-item">Urban households (primary)</div><div class="bm-item">Elderly care centers</div><div class="bm-item">Corporate wellness programs</div><div class="bm-item">Premium hospitals &amp; clinics</div></div>
+      <div class="bm-card"><h4>REVENUE STREAMS</h4><div class="bm-item">Device sales (₹25,000/unit)</div><div class="bm-item">Monthly health subscription (₹299/mo)</div><div class="bm-item">Hospital data intelligence packages</div><div class="bm-item">Enterprise B2B licensing</div></div>
+      <div class="bm-card"><h4>KEY RESOURCES</h4><div class="bm-item">Proprietary AI health models</div><div class="bm-item">Biosensor hardware patents</div><div class="bm-item">Anonymized health dataset</div><div class="bm-item">Medical advisory board</div></div>
+      <div class="bm-card"><h4>KEY PARTNERS</h4><div class="bm-item">Government health ministries</div><div class="bm-item">Insurance companies</div><div class="bm-item">Smart home platforms</div><div class="bm-item">Healthcare data networks</div></div>
+      <div class="bm-card"><h4>COST STRUCTURE</h4><div class="bm-item">Hardware manufacturing (35%)</div><div class="bm-item">AI R&amp;D investment (15%)</div><div class="bm-item">Cloud infrastructure (12%)</div><div class="bm-item">Sales &amp; marketing (18%)</div></div>
+    </div>
+  </div>
+  <div class="section" id="tab-proto">
+    <div class="mirror-demo">
+      <div style="font-family:'Rajdhani',sans-serif;font-size:13px;color:var(--mir-muted);letter-spacing:2px;margin-bottom:12px">AI HEALTH MIRROR SIMULATION</div>
+      <div class="mirror-screen">
+        <div class="greeting" id="greetingText">Good Morning, Nikhil</div>
+        <div class="date-time">Tuesday, 18 March 2050 · 07:14 AM</div>
+        <div class="health-grid">
+          <div class="health-item"><div class="health-key">HEART RATE</div><div class="health-val" id="hrVal">72 bpm</div></div>
+          <div class="health-item"><div class="health-key">STRESS LEVEL</div><div class="health-val" id="stressVal">Low</div></div>
+          <div class="health-item"><div class="health-key">SLEEP SCORE</div><div class="health-val" id="sleepVal">85%</div></div>
+          <div class="health-item"><div class="health-key">HYDRATION</div><div class="health-val">Drink 2 glasses</div></div>
+          <div class="health-item"><div class="health-key">SKIN HEALTH</div><div class="health-val">Normal</div></div>
+          <div class="health-item"><div class="health-key">OVERALL SCORE</div><div class="health-val" style="color:var(--mir-green)" id="overallVal">87/100</div></div>
+        </div>
+        <div class="health-tip" id="tipVal">Today's tip: Take a 10-min walk — cortisol slightly elevated</div>
+      </div>
+      <button class="scan-btn" onclick="runScan()">RUN HEALTH SCAN</button>
+      <div class="scanning" id="scanMsg"></div>
+    </div>
+  </div>
+</div>
+<script>
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach((t,i)=>{const ids=['bsc','revenue','biz','proto'];t.classList.toggle('active',ids[i]===id);});
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='revenue')buildRevChart();
+}
+let chartBuilt=false;
+function buildRevChart(){
+  if(chartBuilt)return;chartBuilt=true;
+  const years=['2050','2051','2052','2053','2054','2055'];
+  const revs=[80,120,165,210,248,285];
+  const wrap=document.getElementById('revChart');
+  const maxR=Math.max(...revs);wrap.innerHTML='';
+  years.forEach((y,i)=>{
+    const h=Math.round((revs[i]/maxR)*130);
+    const col=document.createElement('div');col.className='bar-col';
+    col.innerHTML=`<span class="bar-val">₹${revs[i]}Cr</span><div class="bar" style="height:${h}px;background:linear-gradient(to top,#7c3aed,#00d4ff)"></div><span class="bar-label">${y}</span>`;
+    wrap.appendChild(col);
+  });
+}
+let scanCount=1;
+const names=['Nikhil','Priya','Rahul','Ananya','Dev'];
+const hrs=[68,72,76,80,65];
+const stresses=['Low','Moderate','Low','Very Low','Low'];
+const sleeps=[78,82,85,88,91];
+const tips=['Take a 10-min walk — cortisol slightly elevated','Excellent sleep! Maintain your 10pm routine','Drink 3 glasses of water before noon','Schedule a 5-min breathing exercise','Great vitals — keep up the cardio routine'];
+function runScan(){
+  const btn=document.querySelector('.scan-btn');const msg=document.getElementById('scanMsg');
+  btn.disabled=true;btn.textContent='SCANNING...';msg.textContent='Analyzing facial features...';
+  const steps=['Detecting heart rate via facial pulse...','Analyzing skin hydration markers...','Evaluating sleep biomarkers...','Generating health report...'];
+  let i=0;const iv=setInterval(()=>{msg.textContent=steps[i++];if(i>=steps.length){clearInterval(iv);finishScan();}},600);
+}
+function finishScan(){
+  const r=()=>Math.floor(Math.random()*5);
+  document.getElementById('greetingText').textContent='Good Morning, '+names[r()];
+  document.getElementById('hrVal').textContent=hrs[r()]+' bpm';
+  document.getElementById('stressVal').textContent=stresses[r()];
+  document.getElementById('sleepVal').textContent=sleeps[r()]+'%';
+  const score=Math.floor(75+Math.random()*20);
+  document.getElementById('overallVal').textContent=score+'/100';
+  document.getElementById('overallVal').style.color=score>=80?'#10b981':score>=60?'#f59e0b':'#ef4444';
+  document.getElementById('tipVal').textContent=tips[r()];
+  const btn=document.querySelector('.scan-btn');btn.disabled=false;btn.textContent='RUN HEALTH SCAN';
+  document.getElementById('scanMsg').textContent='Scan complete!';
+  setTimeout(()=>document.getElementById('scanMsg').textContent='',2000);
+}
+</script>
+</body>
+</html>
